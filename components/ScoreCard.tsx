@@ -23,8 +23,16 @@ export function ScoreCard({
   onNewBatsman
 }: ScoreCardProps) {
   const [showBowlerSelection, setShowBowlerSelection] = useState(false);
-  const [showBatsmanModal, setShowBatsmanModal] = useState(false);
+  const [showNewBatsmanModal, setShowNewBatsmanModal] = useState(false);
   
+  // Check for wicket and show new batsman modal
+  useEffect(() => {
+    const batsmenCount = innings.batsmen.filter(b => b.status === 'batting').length;
+    if (batsmenCount < 2 && innings.wickets > 0 && innings.wickets < 10) {
+      setShowNewBatsmanModal(true);
+    }
+  }, [innings.wickets]);
+
   // Check for over completion and show bowler selection
   useEffect(() => {
     if (innings.totalBalls > 0 && innings.totalBalls % 6 === 0) {
@@ -84,7 +92,7 @@ export function ScoreCard({
       return (
         <TouchableOpacity
           style={styles.addBatsmanButton}
-          onPress={() => setShowBatsmanModal(true)}
+          onPress={() => setShowNewBatsmanModal(true)}
         >
           <Text style={styles.addBatsmanText}>Add Batsman</Text>
         </TouchableOpacity>
@@ -231,16 +239,16 @@ export function ScoreCard({
       />
 
       <PlayerNameModal
-        isVisible={showBatsmanModal}
-        title="Enter Batsman Name"
-        numPlayers={1}
-        onSubmit={(names) => {
-          if (onNewBatsman && names[0]) {
-            onNewBatsman(names[0]);
+        isVisible={showNewBatsmanModal}
+        title="New Batsman"
+        onSubmit={(name) => {
+          if (onNewBatsman) {
+            onNewBatsman(name);
           }
-          setShowBatsmanModal(false);
+          setShowNewBatsmanModal(false);
         }}
-        onClose={() => setShowBatsmanModal(false)}
+        onClose={() => setShowNewBatsmanModal(false)}
+        mode="add"
       />
     </View>
   );
