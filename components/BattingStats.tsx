@@ -3,13 +3,12 @@ import {
   StyleSheet, 
   View, 
   Text, 
-  TouchableOpacity, 
-  TextInput,
-  Alert,
+  TouchableOpacity,
   ScrollView 
 } from 'react-native';
 import { Batsman, Innings } from '@/types/match';
-import { Edit2, Save, X } from 'lucide-react-native';
+import { Edit2 } from 'lucide-react-native';
+import { PlayerNameModal } from './PlayerNameModal';
 
 interface BattingStatsProps {
   innings: Innings;
@@ -19,27 +18,16 @@ interface BattingStatsProps {
 
 export function BattingStats({ innings, teamName, onUpdateBatsmanName }: BattingStatsProps) {
   const [editingBatsman, setEditingBatsman] = useState<string | null>(null);
-  const [newName, setNewName] = useState('');
 
-  const handleEditName = (batsman: Batsman) => {
+  const handleLongPress = (batsman: Batsman) => {
     setEditingBatsman(batsman.name);
-    setNewName(batsman.name);
   };
 
-  const handleSaveName = (oldName: string) => {
-    if (!newName.trim()) {
-      Alert.alert('Invalid Name', 'Please enter a valid name');
-      return;
+  const handleUpdateName = (newName: string) => {
+    if (editingBatsman) {
+      onUpdateBatsmanName(editingBatsman, newName);
+      setEditingBatsman(null);
     }
-
-    if (innings.batsmen.some(b => b.name === newName.trim() && b.name !== oldName)) {
-      Alert.alert('Duplicate Name', 'A batsman with this name already exists');
-      return;
-    }
-
-    onUpdateBatsmanName(oldName, newName.trim());
-    setEditingBatsman(null);
-    setNewName('');
   };
 
   const sortedBatsmen = [...innings.batsmen].sort((a, b) => {
@@ -66,62 +54,35 @@ export function BattingStats({ innings, teamName, onUpdateBatsmanName }: Batting
           <Text style={styles.headerCell}>4s</Text>
           <Text style={styles.headerCell}>6s</Text>
           <Text style={styles.headerCell}>SR</Text>
-          <Text style={styles.headerCell}></Text>
         </View>
 
         {sortedBatsmen.map((batsman) => (
-          <View key={batsman.name} style={styles.tableRow}>
-            {editingBatsman === batsman.name ? (
-              <View style={[styles.cell, styles.nameCell, styles.editingCell]}>
-                <TextInput
-                  style={styles.input}
-                  value={newName}
-                  onChangeText={setNewName}
-                  autoFocus
-                />
-                <View style={styles.editActions}>
-                  <TouchableOpacity
-                    onPress={() => handleSaveName(batsman.name)}
-                    style={styles.actionButton}
-                  >
-                    <Save size={16} color="#27ae60" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setEditingBatsman(null)}
-                    style={styles.actionButton}
-                  >
-                    <X size={16} color="#e74c3c" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <>
-                <Text style={[styles.cell, styles.nameCell]}>
-                  {batsman.name}
-                  {batsman.status === 'batting' && ' *'}
-                </Text>
-                <Text style={styles.cell}>{batsman.runs}</Text>
-                <Text style={styles.cell}>{batsman.balls}</Text>
-                <Text style={styles.cell}>{batsman.fours || 0}</Text>
-                <Text style={styles.cell}>{batsman.sixes || 0}</Text>
-                <Text style={styles.cell}>{getStrikeRate(batsman)}</Text>
-                <TouchableOpacity
-                  style={[styles.cell, styles.editButton]}
-                  onPress={() => handleEditName(batsman)}
-                >
-                  <Edit2 size={16} color="#666" />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
+          <TouchableOpacity
+            key={batsman.name}
+            style={styles.tableRow}
+            onLongPress={() => handleLongPress(batsman)}
+            delayLongPress={500}
+          >
+            <Text style={[styles.cell, styles.nameCell]}>
+              {batsman.name}
+              {batsman.status === 'batting' && ' *'}
+            </Text>
+            <Text style={styles.cell}>{batsman.runs}</Text>
+            <Text style={styles.cell}>{batsman.balls}</Text>
+            <Text style={styles.cell}>{batsman.fours || 0}</Text>
+            <Text style={styles.cell}>{batsman.sixes || 0}</Text>
+            <Text style={styles.cell}>{getStrikeRate(batsman)}</Text>
+          </TouchableOpacity>
         ))}
       </View>
 
-      {sortedBatsmen.length === 0 && (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No batsmen yet</Text>
-        </View>
-      )}
+      <PlayerNameModal
+        isVisible={!!editingBatsman}
+        title="Edit Batsman Name"
+        initialName={editingBatsman || ''}
+        onSubmit={handleUpdateName}
+        onClose={() => setEditingBatsman(null)}
+      />
     </ScrollView>
   );
 }
@@ -176,40 +137,4 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
   },
-  editingCell: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingRight: 8,
-  },
-  input: {
-    flex: 1,
-    height: 32,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    marginRight: 8,
-    fontSize: 14,
-    color: '#333',
-  },
-  editActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    padding: 4,
-  },
-  editButton: {
-    flex: 0.5,
-  },
-  emptyState: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-}); 
+});

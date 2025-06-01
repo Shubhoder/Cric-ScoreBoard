@@ -8,59 +8,50 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  Keyboard
 } from 'react-native';
+import { Save, X } from 'lucide-react-native';
 
 interface PlayerNameModalProps {
   isVisible: boolean;
   title: string;
-  initialNames?: string[];
-  onSubmit: (names: string[]) => void;
-  onClose?: () => void;
-  numPlayers?: number;
-  placeholder?: string[];
+  initialName?: string;
+  onSubmit: (newName: string) => void;
+  onClose: () => void;
 }
 
 export function PlayerNameModal({
   isVisible,
   title,
-  initialNames = [],
+  initialName = '',
   onSubmit,
-  onClose,
-  numPlayers = 1,
-  placeholder = ['Enter player name']
+  onClose
 }: PlayerNameModalProps) {
-  const [playerNames, setPlayerNames] = useState<string[]>(
-    Array(numPlayers).fill('').map((_, i) => initialNames[i] || '')
-  );
+  const [newName, setNewName] = useState(initialName);
 
   useEffect(() => {
     if (isVisible) {
-      setPlayerNames(Array(numPlayers).fill('').map((_, i) => initialNames[i] || ''));
+      setNewName(initialName);
     }
-  }, [isVisible, numPlayers, initialNames]);
+  }, [isVisible, initialName]);
 
   const handleSubmit = () => {
-    const emptyFields = playerNames.some(name => !name.trim());
-    if (emptyFields) {
-      Alert.alert('Required Fields', 'Please fill in all player names');
+    if (!newName.trim()) {
+      Alert.alert('Invalid Name', 'Please enter a valid name');
       return;
     }
 
-    const uniqueNames = new Set(playerNames.map(name => name.trim()));
-    if (uniqueNames.size !== playerNames.length) {
-      Alert.alert('Duplicate Names', 'Please ensure all player names are unique');
-      return;
-    }
-
-    onSubmit(playerNames.map(name => name.trim()));
+    onSubmit(newName.trim());
+    setNewName('');
+    onClose();
   };
 
   return (
     <Modal
       visible={isVisible}
       transparent={true}
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -68,45 +59,38 @@ export function PlayerNameModal({
         style={styles.container}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
-          
-          {playerNames.map((name, index) => (
-            <TextInput
-              key={index}
-              style={styles.input}
-              value={name}
-              onChangeText={(text) => {
-                const newNames = [...playerNames];
-                newNames[index] = text;
-                setPlayerNames(newNames);
-              }}
-              placeholder={placeholder[index] || 'Enter player name'}
-              placeholderTextColor="#999"
-              returnKeyType={index === playerNames.length - 1 ? 'done' : 'next'}
-              onSubmitEditing={() => {
-                if (index === playerNames.length - 1) {
-                  handleSubmit();
-                }
-              }}
-              blurOnSubmit={false}
-            />
-          ))}
-          
+          <View style={styles.header}>
+            <Text style={styles.title}>{title}</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <X size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          <TextInput
+            style={styles.input}
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="Enter player name"
+            placeholderTextColor="#999"
+            autoFocus={true}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+          />
+
           <View style={styles.buttonContainer}>
-            {onClose && (
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={onClose}
-              >
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
             
             <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
+              style={[styles.button, styles.saveButton]}
               onPress={handleSubmit}
             >
-              <Text style={styles.buttonText}>Submit</Text>
+              <Save size={16} color="#fff" />
+              <Text style={styles.buttonText}>Save</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -135,12 +119,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 16,
-    textAlign: 'center',
+  },
+  closeButton: {
+    padding: 4,
   },
   input: {
     height: 44,
@@ -148,33 +139,32 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 12,
-    marginBottom: 12,
+    marginBottom: 16,
     fontSize: 16,
     color: '#333',
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    justifyContent: 'flex-end',
+    gap: 8,
   },
   button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
   },
-  submitButton: {
+  saveButton: {
     backgroundColor: '#1e824c',
   },
   cancelButton: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: '#f0f0f0',
   },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
+    color: '#fff',
   },
 });
-
-export default PlayerNameModal; 
