@@ -11,7 +11,7 @@ import {
   Alert,
   Keyboard
 } from 'react-native';
-import { Save, X } from 'lucide-react-native';
+import { Save, X, Plus } from 'lucide-react-native';
 
 interface PlayerNameModalProps {
   isVisible: boolean;
@@ -19,6 +19,7 @@ interface PlayerNameModalProps {
   initialName?: string;
   onSubmit: (newName: string) => void;
   onClose: () => void;
+  mode?: 'edit' | 'add';
 }
 
 export function PlayerNameModal({
@@ -26,7 +27,8 @@ export function PlayerNameModal({
   title,
   initialName = '',
   onSubmit,
-  onClose
+  onClose,
+  mode = 'edit'
 }: PlayerNameModalProps) {
   const [newName, setNewName] = useState(initialName);
 
@@ -75,6 +77,7 @@ export function PlayerNameModal({
             autoFocus={true}
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
+            selectTextOnFocus={true}
           />
 
           <View style={styles.buttonContainer}>
@@ -82,15 +85,21 @@ export function PlayerNameModal({
               style={[styles.button, styles.cancelButton]}
               onPress={onClose}
             >
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={[styles.button, styles.saveButton]}
+              style={[styles.button, styles.submitButton]}
               onPress={handleSubmit}
             >
-              <Save size={16} color="#fff" />
-              <Text style={styles.buttonText}>Save</Text>
+              {mode === 'edit' ? (
+                <Save size={16} color="#fff" />
+              ) : (
+                <Plus size={16} color="#fff" />
+              )}
+              <Text style={styles.submitButtonText}>
+                {mode === 'edit' ? 'Save' : 'Add'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -156,15 +165,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 8,
   },
-  saveButton: {
+  submitButton: {
     backgroundColor: '#1e824c',
   },
   cancelButton: {
     backgroundColor: '#f0f0f0',
   },
-  buttonText: {
+  submitButtonText: {
     fontSize: 16,
     fontWeight: '500',
     color: '#fff',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666',
   },
 });
